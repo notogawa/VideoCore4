@@ -1,13 +1,13 @@
 name:                VideoCore4
 version:             0.1.0.0
-synopsis:            Initial project template from stack
+synopsis:            VideoCore4 assembler
 description:         Please see README.md
-homepage:            https://github.com/githubuser/VideoCore4#readme
+homepage:            https://github.com/notogawa/VideoCore4#readme
 license:             BSD3
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2017 Author name here
+author:              Noriyuki OHKAWA
+maintainer:          n.ohkawa@gmail.com
+copyright:           2017 Noriyuki OHKAWA
 category:            Web
 build-type:          Simple
 extra-source-files:  README.md
@@ -15,27 +15,33 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Lib
-  build-depends:       base >= 4.7 && < 5
+  exposed-modules:     VideoCore4.QPU.Assembler
+                       VideoCore4.QPU.Instruction
+  other-modules:       VideoCore4.QPU.Instruction.ALUCondition
+                       VideoCore4.QPU.Instruction.BranchCondition
+                       VideoCore4.QPU.Instruction.BranchRelative
+                       VideoCore4.QPU.Instruction.InputMux
+                       VideoCore4.QPU.Instruction.OpAdd
+                       VideoCore4.QPU.Instruction.OpMul
+                       VideoCore4.QPU.Instruction.PM
+                       VideoCore4.QPU.Instruction.PackMode
+                       VideoCore4.QPU.Instruction.RegAdd
+                       VideoCore4.QPU.Instruction.Register
+                       VideoCore4.QPU.Instruction.SemaphoreAccess
+                       VideoCore4.QPU.Instruction.SemaphoreId
+                       VideoCore4.QPU.Instruction.SetFlag
+                       VideoCore4.QPU.Instruction.SignalingBits
+                       VideoCore4.QPU.Instruction.SmallImmediate
+                       VideoCore4.QPU.Instruction.Types
+                       VideoCore4.QPU.Instruction.UnpackMode
+                       VideoCore4.QPU.Instruction.WriteSwap
+  build-depends:       base >= 4.6 && < 5
+                     , mtl
   default-language:    Haskell2010
-
-executable VideoCore4-exe
-  hs-source-dirs:      app
-  main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-  build-depends:       base
-                     , VideoCore4
-  default-language:    Haskell2010
-
-test-suite VideoCore4-test
-  type:                exitcode-stdio-1.0
-  hs-source-dirs:      test
-  main-is:             Spec.hs
-  build-depends:       base
-                     , VideoCore4
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-  default-language:    Haskell2010
+  ghc-options:         -Wall
+  -- for raspbian jessie (ghc 7.6)
+  default-extensions:  DeriveDataTypeable
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/VideoCore4
+  location: https://github.com/notogawa/VideoCore4
