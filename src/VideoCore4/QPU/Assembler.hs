@@ -3,6 +3,8 @@ module VideoCore4.QPU.Assembler
        (
          Asm
        , asm
+       , label
+       , toLabel
 
        , Inst
 
@@ -69,9 +71,9 @@ module VideoCore4.QPU.Assembler
        ) where
 
 import Data.Int
+import Data.Typeable
 import Data.Word
 import Control.Applicative
-import Control.Monad.Writer.Strict
 import Control.Monad.State.Strict
 import VideoCore4.QPU.Instruction hiding (sig, unpack, pm, pack, cond_add, cond_mul, sf, ws, waddr_add, waddr_mul, op_mul, op_add, raddr_a, raddr_b, add_a, add_b, mul_a, mul_b, small_immed, cond_br, rel, reg, immediate, ms, ls, sa, semaphore)
 import qualified VideoCore4.QPU.Instruction as I
@@ -93,13 +95,40 @@ import VideoCore4.QPU.Instruction.RegAdd
 import VideoCore4.QPU.Instruction.SemaphoreAccess
 import VideoCore4.QPU.Instruction.SemaphoreId
 
-newtype Asm a = Asm { unAsm :: Writer [Instruction] a } deriving (Functor, Applicative, Monad)
+data AsmState =
+  AsmState
+  { asmStateInstruction :: [Instruction]
+  , asmStateLabelPositions :: [(String, Int32)]
+  , asmStateCurrentPosition :: Int32
+  } deriving (Eq, Show, Typeable)
+
+defaultAsmState :: AsmState
+defaultAsmState = AsmState { asmStateInstruction = []
+                           , asmStateLabelPositions = []
+                           , asmStateCurrentPosition = 0
+                           }
+
+newtype Asm a = Asm { unAsm :: State AsmState a } deriving (Functor, Applicative, Monad)
 
 toAsm :: Instruction -> Asm ()
-toAsm inst = Asm $ tell [inst]
+toAsm inst = Asm $ modify' updateState where
+  updateState s = s { asmStateInstruction = asmStateInstruction s ++ [inst]
+                    , asmStateCurrentPosition = 8 + asmStateCurrentPosition s
+                    }
 
-asm :: Asm a -> (a, [Instruction])
-asm = runWriter . unAsm
+asm :: Asm a -> [Instruction]
+asm = asmStateInstruction . flip execState defaultAsmState. unAsm
+
+label :: String -> Asm ()
+label name = Asm $ modify' updateState where
+  updateState s = s { asmStateLabelPositions = (name, asmStateCurrentPosition s) : asmStateLabelPositions s }
+
+toLabel :: String -> Asm (Maybe Int32)
+toLabel name = Asm $ do
+  s <- get
+  case lookup name $ asmStateLabelPositions s of
+    Nothing -> return Nothing
+    Just p  -> return $ Just (p - asmStateCurrentPosition s - 32)
 
 newtype Inst x a = Inst { unInst :: State Instruction a } deriving (Functor, Applicative, Monad)
 
