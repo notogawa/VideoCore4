@@ -8,7 +8,7 @@ license-file:        LICENSE
 author:              Noriyuki OHKAWA
 maintainer:          n.ohkawa@gmail.com
 copyright:           2017 Noriyuki OHKAWA
-category:            Web
+category:            Compilers/Interpreters
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
