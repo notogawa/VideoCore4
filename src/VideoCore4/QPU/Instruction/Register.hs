@@ -111,16 +111,16 @@ import VideoCore4.QPU.Instruction.Types
 newtype Register = Register { unRegister :: Word16 } deriving (Eq, Show, Typeable)
 
 instance To64 Register where
-  to64 = toEnum . fromEnum . (.&. 0x2F) . unRegister
+  to64 = toEnum . fromEnum . (.&. 0x3F) . unRegister
 
 rwab_R :: Word16
-rwab_R = 2 ^ (6 :: Int)
+rwab_R = 1 `shiftL` 6
 rwab_W :: Word16
-rwab_W = 2 ^ (7 :: Int)
+rwab_W = 1 `shiftL` 7
 rwab_A :: Word16
-rwab_A = 2 ^ (8 :: Int)
+rwab_A = 1 `shiftL` 8
 rwab_B :: Word16
-rwab_B = 2 ^ (9 :: Int)
+rwab_B = 1 `shiftL` 9
 rwab_RW :: Word16
 rwab_RW = rwab_R .|. rwab_W
 rwab_RA :: Word16
