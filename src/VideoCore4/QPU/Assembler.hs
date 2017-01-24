@@ -281,8 +281,9 @@ class Has_mul_b a where
 instance Has_mul_b ALU
 instance Has_mul_b ALUSmallImm
 
-small_immed :: SmallImmediate -> Inst ALUSmallImm ()
-small_immed x = Inst $ modify $ \inst -> inst { I.small_immed = x }
+
+small_immed :: ToSmallImmediate a => a -> Inst ALUSmallImm ()
+small_immed x = Inst $ modify $ \inst -> inst { I.small_immed = toSmallImmediate x }
 
 cond_br :: BranchCondition -> Inst Branch ()
 cond_br x = Inst $ modify $ \inst -> inst { I.cond_br = x }

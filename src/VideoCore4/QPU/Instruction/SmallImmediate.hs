@@ -1,6 +1,8 @@
 module VideoCore4.QPU.Instruction.SmallImmediate
        (
          SmallImmediate
+       , ToSmallImmediate
+       , toSmallImmediate
        , small_immed_0
        , small_immed_1
        , small_immed_2
@@ -75,6 +77,47 @@ data SmallImmediate = SmallImmediate { unSmallImmediate :: Word8 } deriving (Eq,
 
 instance To64 SmallImmediate where
   to64 = toEnum . fromEnum . unSmallImmediate
+
+class ToSmallImmediate a where
+  toSmallImmediate :: a -> SmallImmediate
+
+instance ToSmallImmediate SmallImmediate where
+  toSmallImmediate = id
+
+instance ToSmallImmediate Int where
+  toSmallImmediate 0 = small_immed_0
+  toSmallImmediate 1 = small_immed_1
+  toSmallImmediate 2 = small_immed_2
+  toSmallImmediate 3 = small_immed_3
+  toSmallImmediate 4 = small_immed_4
+  toSmallImmediate 5 = small_immed_5
+  toSmallImmediate 6 = small_immed_6
+  toSmallImmediate 7 = small_immed_7
+  toSmallImmediate 8 = small_immed_8
+  toSmallImmediate 9 = small_immed_9
+  toSmallImmediate 10 = small_immed_10
+  toSmallImmediate 11 = small_immed_11
+  toSmallImmediate 12 = small_immed_12
+  toSmallImmediate 13 = small_immed_13
+  toSmallImmediate 14 = small_immed_14
+  toSmallImmediate 15 = small_immed_15
+  toSmallImmediate (-16) = small_immed_M16
+  toSmallImmediate (-15) = small_immed_M15
+  toSmallImmediate (-14) = small_immed_M14
+  toSmallImmediate (-13) = small_immed_M13
+  toSmallImmediate (-12) = small_immed_M12
+  toSmallImmediate (-11) = small_immed_M11
+  toSmallImmediate (-10) = small_immed_M10
+  toSmallImmediate (-9) = small_immed_M9
+  toSmallImmediate (-8) = small_immed_M8
+  toSmallImmediate (-7) = small_immed_M7
+  toSmallImmediate (-6) = small_immed_M6
+  toSmallImmediate (-5) = small_immed_M5
+  toSmallImmediate (-4) = small_immed_M4
+  toSmallImmediate (-3) = small_immed_M3
+  toSmallImmediate (-2) = small_immed_M2
+  toSmallImmediate (-1) = small_immed_M1
+  toSmallImmediate _ = error "invalid small_immed"
 
 small_immed_0 :: SmallImmediate
 small_immed_0 = SmallImmediate 0
