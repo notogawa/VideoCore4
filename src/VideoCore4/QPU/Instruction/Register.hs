@@ -1,6 +1,10 @@
 module VideoCore4.QPU.Instruction.Register
        (
          Register
+
+       , RWAB(..)
+       , rwab
+
        , ra0
        , rb0
        , ra1
@@ -108,239 +112,219 @@ import Data.Typeable
 import Data.Word
 import VideoCore4.QPU.Instruction.Types
 
-newtype Register = Register { unRegister :: Word16 } deriving (Eq, Show, Typeable)
+data RWAB = RA
+          | RB
+          | WA
+          | WB
+          deriving (Eq, Show, Typeable)
+
+data Register = Register { registerAddr :: Word8
+                         , registerRWAB :: [RWAB]
+                         } deriving (Eq, Show, Typeable)
 
 instance To64 Register where
-  to64 = toEnum . fromEnum . (.&. 0x3F) . unRegister
+  to64 = toEnum . fromEnum . (.&. 0x3F) . registerAddr
 
-rwab_R :: Word16
-rwab_R = 1 `shiftL` 6
-rwab_W :: Word16
-rwab_W = 1 `shiftL` 7
-rwab_A :: Word16
-rwab_A = 1 `shiftL` 8
-rwab_B :: Word16
-rwab_B = 1 `shiftL` 9
-rwab_RW :: Word16
-rwab_RW = rwab_R .|. rwab_W
-rwab_RA :: Word16
-rwab_RA = rwab_R .|. rwab_A
-rwab_RB :: Word16
-rwab_RB = rwab_R .|. rwab_B
-rwab_WA :: Word16
-rwab_WA = rwab_W .|. rwab_A
-rwab_WB :: Word16
-rwab_WB = rwab_W .|. rwab_B
-rwab_AB :: Word16
-rwab_AB = rwab_A .|. rwab_B
-rwab_RWA :: Word16
-rwab_RWA = rwab_RW .|. rwab_A
-rwab_RWB :: Word16
-rwab_RWB = rwab_RW .|. rwab_B
-rwab_RAB :: Word16
-rwab_RAB = rwab_R .|. rwab_AB
-rwab_WAB :: Word16
-rwab_WAB = rwab_W .|. rwab_AB
-rwab_RWAB :: Word16
-rwab_RWAB = rwab_RW .|. rwab_AB
+rwab :: Register -> [RWAB]
+rwab = registerRWAB
 
 ra0 :: Register
-ra0 = Register $ 0 .|. rwab_RWA
+ra0 = Register 0 [RA,WA]
 rb0 :: Register
-rb0 = Register $ 0 .|. rwab_RWB
+rb0 = Register 0 [RB,WB]
 ra1 :: Register
-ra1 = Register $ 1 .|. rwab_RWA
+ra1 = Register 1 [RA,WA]
 rb1 :: Register
-rb1 = Register $ 1 .|. rwab_RWB
+rb1 = Register 1 [RB,WB]
 ra2 :: Register
-ra2 = Register $ 2 .|. rwab_RWA
+ra2 = Register 2 [RA,WA]
 rb2 :: Register
-rb2 = Register $ 2 .|. rwab_RWB
+rb2 = Register 2 [RB,WB]
 ra3 :: Register
-ra3 = Register $ 3 .|. rwab_RWA
+ra3 = Register 3 [RA,WA]
 rb3 :: Register
-rb3 = Register $ 3 .|. rwab_RWB
+rb3 = Register 3 [RB,WB]
 ra4 :: Register
-ra4 = Register $ 4 .|. rwab_RWA
+ra4 = Register 4 [RA,WA]
 rb4 :: Register
-rb4 = Register $ 4 .|. rwab_RWB
+rb4 = Register 4 [RB,WB]
 ra5 :: Register
-ra5 = Register $ 5 .|. rwab_RWA
+ra5 = Register 5 [RA,WA]
 rb5 :: Register
-rb5 = Register $ 5 .|. rwab_RWB
+rb5 = Register 5 [RB,WB]
 ra6 :: Register
-ra6 = Register $ 6 .|. rwab_RWA
+ra6 = Register 6 [RA,WA]
 rb6 :: Register
-rb6 = Register $ 6 .|. rwab_RWB
+rb6 = Register 6 [RB,WB]
 ra7 :: Register
-ra7 = Register $ 7 .|. rwab_RWA
+ra7 = Register 7 [RA,WA]
 rb7 :: Register
-rb7 = Register $ 7 .|. rwab_RWB
+rb7 = Register 7 [RB,WB]
 ra8 :: Register
-ra8 = Register $ 8 .|. rwab_RWA
+ra8 = Register 8 [RA,WA]
 rb8 :: Register
-rb8 = Register $ 8 .|. rwab_RWB
+rb8 = Register 8 [RB,WB]
 ra9 :: Register
-ra9 = Register $ 9 .|. rwab_RWA
+ra9 = Register 9 [RA,WA]
 rb9 :: Register
-rb9 = Register $ 9 .|. rwab_RWB
+rb9 = Register 9 [RB,WB]
 ra10 :: Register
-ra10 = Register $ 10 .|. rwab_RWA
+ra10 = Register 10 [RA,WA]
 rb10 :: Register
-rb10 = Register $ 10 .|. rwab_RWB
+rb10 = Register 10 [RB,WB]
 ra11 :: Register
-ra11 = Register $ 11 .|. rwab_RWA
+ra11 = Register 11 [RA,WA]
 rb11 :: Register
-rb11 = Register $ 11 .|. rwab_RWB
+rb11 = Register 11 [RB,WB]
 ra12 :: Register
-ra12 = Register $ 12 .|. rwab_RWA
+ra12 = Register 12 [RA,WA]
 rb12 :: Register
-rb12 = Register $ 12 .|. rwab_RWB
+rb12 = Register 12 [RB,WB]
 ra13 :: Register
-ra13 = Register $ 13 .|. rwab_RWA
+ra13 = Register 13 [RA,WA]
 rb13 :: Register
-rb13 = Register $ 13 .|. rwab_RWB
+rb13 = Register 13 [RB,WB]
 ra14 :: Register
-ra14 = Register $ 14 .|. rwab_RWA
+ra14 = Register 14 [RA,WA]
 rb14 :: Register
-rb14 = Register $ 14 .|. rwab_RWB
+rb14 = Register 14 [RB,WB]
 ra15 :: Register
-ra15 = Register $ 15 .|. rwab_RWA
+ra15 = Register 15 [RA,WA]
 rb15 :: Register
-rb15 = Register $ 15 .|. rwab_RWB
+rb15 = Register 15 [RB,WB]
 ra16 :: Register
-ra16 = Register $ 16 .|. rwab_RWA
+ra16 = Register 16 [RA,WA]
 rb16 :: Register
-rb16 = Register $ 16 .|. rwab_RWB
+rb16 = Register 16 [RB,WB]
 ra17 :: Register
-ra17 = Register $ 17 .|. rwab_RWA
+ra17 = Register 17 [RA,WA]
 rb17 :: Register
-rb17 = Register $ 17 .|. rwab_RWB
+rb17 = Register 17 [RB,WB]
 ra18 :: Register
-ra18 = Register $ 18 .|. rwab_RWA
+ra18 = Register 18 [RA,WA]
 rb18 :: Register
-rb18 = Register $ 18 .|. rwab_RWB
+rb18 = Register 18 [RB,WB]
 ra19 :: Register
-ra19 = Register $ 19 .|. rwab_RWA
+ra19 = Register 19 [RA,WA]
 rb19 :: Register
-rb19 = Register $ 19 .|. rwab_RWB
+rb19 = Register 19 [RB,WB]
 ra20 :: Register
-ra20 = Register $ 20 .|. rwab_RWA
+ra20 = Register 20 [RA,WA]
 rb20 :: Register
-rb20 = Register $ 20 .|. rwab_RWB
+rb20 = Register 20 [RB,WB]
 ra21 :: Register
-ra21 = Register $ 21 .|. rwab_RWA
+ra21 = Register 21 [RA,WA]
 rb21 :: Register
-rb21 = Register $ 21 .|. rwab_RWB
+rb21 = Register 21 [RB,WB]
 ra22 :: Register
-ra22 = Register $ 22 .|. rwab_RWA
+ra22 = Register 22 [RA,WA]
 rb22 :: Register
-rb22 = Register $ 22 .|. rwab_RWB
+rb22 = Register 22 [RB,WB]
 ra23 :: Register
-ra23 = Register $ 23 .|. rwab_RWA
+ra23 = Register 23 [RA,WA]
 rb23 :: Register
-rb23 = Register $ 23 .|. rwab_RWB
+rb23 = Register 23 [RB,WB]
 ra24 :: Register
-ra24 = Register $ 24 .|. rwab_RWA
+ra24 = Register 24 [RA,WA]
 rb24 :: Register
-rb24 = Register $ 24 .|. rwab_RWB
+rb24 = Register 24 [RB,WB]
 ra25 :: Register
-ra25 = Register $ 25 .|. rwab_RWA
+ra25 = Register 25 [RA,WA]
 rb25 :: Register
-rb25 = Register $ 25 .|. rwab_RWB
+rb25 = Register 25 [RB,WB]
 ra26 :: Register
-ra26 = Register $ 26 .|. rwab_RWA
+ra26 = Register 26 [RA,WA]
 rb26 :: Register
-rb26 = Register $ 26 .|. rwab_RWB
+rb26 = Register 26 [RB,WB]
 ra27 :: Register
-ra27 = Register $ 27 .|. rwab_RWA
+ra27 = Register 27 [RA,WA]
 rb27 :: Register
-rb27 = Register $ 27 .|. rwab_RWB
+rb27 = Register 27 [RB,WB]
 ra28 :: Register
-ra28 = Register $ 28 .|. rwab_RWA
+ra28 = Register 28 [RA,WA]
 rb28 :: Register
-rb28 = Register $ 28 .|. rwab_RWB
+rb28 = Register 28 [RB,WB]
 ra29 :: Register
-ra29 = Register $ 29 .|. rwab_RWA
+ra29 = Register 29 [RA,WA]
 rb29 :: Register
-rb29 = Register $ 29 .|. rwab_RWB
+rb29 = Register 29 [RB,WB]
 ra30 :: Register
-ra30 = Register $ 30 .|. rwab_RWA
+ra30 = Register 30 [RA,WA]
 rb30 :: Register
-rb30 = Register $ 30 .|. rwab_RWB
+rb30 = Register 30 [RB,WB]
 ra31 :: Register
-ra31 = Register $ 31 .|. rwab_RWA
+ra31 = Register 31 [RA,WA]
 rb31 :: Register
-rb31 = Register $ 31 .|. rwab_RWB
+rb31 = Register 31 [RB,WB]
 uniform_read :: Register
-uniform_read = Register $ 32 .|. rwab_RAB
+uniform_read = Register 32 [RA,RB]
 r0 :: Register
-r0 = Register $ 32 .|. rwab_WAB
+r0 = Register 32 [WA,WB]
 r1 :: Register
-r1 = Register $ 33 .|. rwab_WAB
+r1 = Register 33 [WA,WB]
 r2 :: Register
-r2 = Register $ 34 .|. rwab_WAB
+r2 = Register 34 [WA,WB]
 r3 :: Register
-r3 = Register $ 35 .|. rwab_WAB
+r3 = Register 35 [WA,WB]
 tmu_noswap :: Register
-tmu_noswap = Register $ 36 .|. rwab_WAB
+tmu_noswap = Register 36 [WA,WB]
 r5 :: Register
-r5 = Register $ 37 .|. rwab_WAB
+r5 = Register 37 [WA,WB]
 element_number :: Register
-element_number = Register $ 38 .|. rwab_RA
+element_number = Register 38 [RA]
 qpu_number :: Register
-qpu_number = Register $ 38 .|. rwab_RB
+qpu_number = Register 38 [RB]
 host_int :: Register
-host_int = Register $ 38 .|. rwab_WAB
+host_int = Register 38 [WA,WB]
 nop :: Register
-nop = Register $ 39 .|. rwab_RWAB
+nop = Register 39 [RA,RB,WA,WB]
 uniforms_address :: Register
-uniforms_address = Register $ 40 .|. rwab_WAB
+uniforms_address = Register 40 [WA,WB]
 vpm_read :: Register
-vpm_read = Register $ 48 .|. rwab_RAB
+vpm_read = Register 48 [RA,RB]
 vpm_write :: Register
-vpm_write = Register $ 48 .|. rwab_WAB
+vpm_write = Register 48 [WA,WB]
 vpm_ld_busy :: Register
-vpm_ld_busy = Register $ 49 .|. rwab_RA
+vpm_ld_busy = Register 49 [RA]
 vpm_st_busy :: Register
-vpm_st_busy = Register $ 49 .|. rwab_RB
+vpm_st_busy = Register 49 [RB]
 vpmvcd_rd_setup :: Register
-vpmvcd_rd_setup = Register $ 49 .|. rwab_WA
+vpmvcd_rd_setup = Register 49 [WA]
 vpmvcd_wr_setup :: Register
-vpmvcd_wr_setup = Register $ 49 .|. rwab_WB
+vpmvcd_wr_setup = Register 49 [WB]
 vpm_ld_wait :: Register
-vpm_ld_wait = Register $ 50 .|. rwab_RA
+vpm_ld_wait = Register 50 [RA]
 vpm_st_wait :: Register
-vpm_st_wait = Register $ 50 .|. rwab_RB
+vpm_st_wait = Register 50 [RB]
 vpm_ld_addr :: Register
-vpm_ld_addr = Register $ 50 .|. rwab_WA
+vpm_ld_addr = Register 50 [WA]
 vpm_st_addr :: Register
-vpm_st_addr = Register $ 50 .|. rwab_WB
+vpm_st_addr = Register 50 [WB]
 mutex_acquire :: Register
-mutex_acquire = Register $ 51 .|. rwab_RAB
+mutex_acquire = Register 51 [RA,RB]
 mutex_release :: Register
-mutex_release = Register $ 51 .|. rwab_WAB
+mutex_release = Register 51 [WA,WB]
 sfu_recip :: Register
-sfu_recip = Register $ 52 .|. rwab_WAB
+sfu_recip = Register 52 [WA,WB]
 sfu_recipsqrt :: Register
-sfu_recipsqrt = Register $ 53 .|. rwab_WAB
+sfu_recipsqrt = Register 53 [WA,WB]
 sfu_exp :: Register
-sfu_exp = Register $ 54 .|. rwab_WAB
+sfu_exp = Register 54 [WA,WB]
 sfu_log :: Register
-sfu_log = Register $ 55 .|. rwab_WAB
+sfu_log = Register 55 [WA,WB]
 tmu0s :: Register
-tmu0s = Register $ 56 .|. rwab_WAB
+tmu0s = Register 56 [WA,WB]
 tmu0t :: Register
-tmu0t = Register $ 57 .|. rwab_WAB
+tmu0t = Register 57 [WA,WB]
 tmu0r :: Register
-tmu0r = Register $ 58 .|. rwab_WAB
+tmu0r = Register 58 [WA,WB]
 tmu0b :: Register
-tmu0b = Register $ 59 .|. rwab_WAB
+tmu0b = Register 59 [WA,WB]
 tmu1s :: Register
-tmu1s = Register $ 60 .|. rwab_WAB
+tmu1s = Register 60 [WA,WB]
 tmu1t :: Register
-tmu1t = Register $ 61 .|. rwab_WAB
+tmu1t = Register 61 [WA,WB]
 tmu1r :: Register
-tmu1r = Register $ 62 .|. rwab_WAB
+tmu1r = Register 62 [WA,WB]
 tmu1b :: Register
-tmu1b = Register $ 63 .|. rwab_WAB
+tmu1b = Register 63 [WA,WB]
