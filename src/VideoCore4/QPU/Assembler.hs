@@ -423,15 +423,23 @@ toInputMux R5 = mux_R5
 toInputMux RA = mux_RA
 toInputMux RB = mux_RB
 
-newtype InstStmt part tag a = InstStmt { unInstStmt :: Inst tag a }
+data InstStmt part tag a =
+  InstStmt
+  { instStmtInst :: Inst tag a
+  , instStmtSkip :: Bool
+  , instStmtSwap :: Bool
+  }
 
 addInst :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => OpAdd -> Register -> Mux -> Mux -> InstStmt OpAdd tag ()
-addInst op r a b = InstStmt $ do
-  cond_add cond_AL
-  op_add op
-  waddr_add r
-  add_a $ toInputMux a
-  add_b $ toInputMux b
+addInst op r a b = InstStmt { instStmtInst = do
+                                 cond_add cond_AL
+                                 op_add op
+                                 waddr_add r
+                                 add_a $ toInputMux a
+                                 add_b $ toInputMux b
+                            , instStmtSkip = AW `elem` rwab r
+                            , instStmtSwap = BW `elem` rwab r
+                            }
 
 fadd :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
 fadd = addInst op_add_FADD
@@ -503,12 +511,15 @@ v8subs :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Re
 v8subs = addInst op_add_V8SUBS
 
 mulInst :: (Has_cond_mul tag, Has_op_mul tag, Has_mul_a tag, Has_mul_b tag) => OpMul -> Register -> Mux -> Mux -> InstStmt OpMul tag ()
-mulInst op r a b = InstStmt $ do
-  cond_mul cond_AL
-  op_mul op
-  waddr_mul r
-  mul_a $ toInputMux a
-  mul_b $ toInputMux b
+mulInst op r a b = InstStmt { instStmtInst = do
+                                 cond_mul cond_AL
+                                 op_mul op
+                                 waddr_mul r
+                                 mul_a $ toInputMux a
+                                 mul_b $ toInputMux b
+                            , instStmtSkip = BW `elem` rwab r
+                            , instStmtSwap = AW `elem` rwab r
+                            }
 
 fmul :: (Has_cond_mul tag, Has_op_mul tag, Has_mul_a tag, Has_mul_b tag) => Register -> Mux -> Mux -> InstStmt OpMul tag ()
 fmul = mulInst op_mul_FMUL
@@ -532,4 +543,22 @@ v8subs' :: (Has_cond_mul tag, Has_op_mul tag, Has_mul_a tag, Has_mul_b tag) => R
 v8subs' = mulInst op_mul_V8SUBS
 
 (#) :: InstStmt OpAdd tag () -> InstStmt OpMul tag () -> Inst tag ()
-opAdd # opMul = unInstStmt opAdd >> unInstStmt opMul
+opAdd # opMul = do
+  instStmtInst opAdd
+  instStmtInst opMul
+  let skip = instStmtSkip opAdd && instStmtSkip opMul
+  let swap = instStmtSwap opAdd && instStmtSwap opMul
+  case (skip, swap) of
+    (True ,     _) -> return ()
+    (False,  True) -> ws ws_On
+    (False, False) -> error "invalid register"
+
+unInstStmt :: InstStmt part tag a -> Inst tag ()
+unInstStmt op = do
+  _ <- instStmtInst op
+  let skip = instStmtSkip op
+  let swap = instStmtSwap op
+  case (skip, swap) of
+    (True ,     _) -> return ()
+    (False,  True) -> ws ws_On
+    (False, False) -> error "invalid register"
