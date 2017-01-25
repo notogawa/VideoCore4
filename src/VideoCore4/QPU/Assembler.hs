@@ -1,3 +1,4 @@
+{-# LANGUAGE NegativeLiterals #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module VideoCore4.QPU.Assembler
        (
@@ -51,6 +52,46 @@ module VideoCore4.QPU.Assembler
        , sa
        , semaphore
 
+       , setupVCDDMAStore
+       , setupVCDDMALoad
+       , setupVCDDMALoadStride
+
+       , Mux(..)
+       , (#)
+       , with
+
+       , fadd
+       , fsub
+       , fmin
+       , fmax
+       , fminabs
+       , fmaxabs
+       , ftoi
+       , itof
+       , iadd
+       , isub
+       , shr
+       , asr
+       , ror
+       , shl
+       , imin
+       , imax
+       , band
+       , bor
+       , bxor
+       , bnot
+       , clz
+       , v8adds
+       , v8subs
+
+       , fmul
+       , mul24
+       , v8muld
+       , v8min
+       , v8max
+       , v8adds'
+       , v8subs'
+
        , module VideoCore4.QPU.Instruction.SignalingBits
        , module VideoCore4.QPU.Instruction.UnpackMode
        , module VideoCore4.QPU.Instruction.PM
@@ -70,7 +111,9 @@ module VideoCore4.QPU.Assembler
        , module VideoCore4.QPU.Instruction.SemaphoreId
        ) where
 
+import Data.Bits
 import Data.Int
+import Data.List
 import Data.Typeable
 import Data.Word
 import Control.Applicative
@@ -130,42 +173,46 @@ toLabel name = Asm $ do
     Nothing -> return Nothing
     Just p  -> return $ Just (p - asmStateCurrentPosition s - 32)
 
-newtype Inst x a = Inst { unInst :: State Instruction a } deriving (Functor, Applicative, Monad)
+newtype Inst tag a = Inst { unInst :: State Instruction a } deriving (Functor, Applicative, Monad)
 
 data ALU
-
-alu :: Inst ALU a -> Asm ()
-alu = toAsm . flip execState defaultALUInstruction . unInst
-
 data ALUSmallImm
-
-alui :: Inst ALUSmallImm a -> Asm ()
-alui = toAsm . flip execState defaultALUSmallImmInstruction . unInst
-
 data Branch
-
-br :: Inst Branch a -> Asm ()
-br = toAsm . flip execState defaultBranchInstruction . unInst
-
 data LoadImm32
-
-li32 :: Inst LoadImm32 a -> Asm ()
-li32 = toAsm . flip execState defaultLoadImm32Instruction . unInst
-
 data LoadImmPerElmtSigned
-
-lipes :: Inst LoadImmPerElmtSigned a -> Asm ()
-lipes = toAsm . flip execState defaultLoadImmPerElmtSignedInstruction . unInst
-
 data LoadImmPerElmtUnsigned
-
-lipeu :: Inst LoadImmPerElmtUnsigned a -> Asm ()
-lipeu = toAsm . flip execState defaultLoadImmPerElmtUnsignedInstruction . unInst
-
 data Semaphore
 
-sem :: Inst Semaphore a -> Asm ()
-sem = toAsm . flip execState defaultSemaphoreInstruction . unInst
+class IsInst inst where
+  alu :: inst ALU a -> Asm ()
+  alui :: inst ALUSmallImm a -> Asm ()
+  br :: inst Branch a -> Asm ()
+  li32 :: inst LoadImm32 a -> Asm ()
+  lipes :: inst LoadImmPerElmtSigned a -> Asm ()
+  lipeu :: inst LoadImmPerElmtUnsigned a -> Asm ()
+  sem :: inst Semaphore a -> Asm ()
+  with :: inst tag () -> Inst tag () -> Inst tag ()
+
+
+instance IsInst Inst where
+  alu = toAsm . flip execState defaultALUInstruction . unInst
+  alui = toAsm . flip execState defaultALUSmallImmInstruction . unInst
+  br = toAsm . flip execState defaultBranchInstruction . unInst
+  li32 = toAsm . flip execState defaultLoadImm32Instruction . unInst
+  lipes = toAsm . flip execState defaultLoadImmPerElmtSignedInstruction . unInst
+  lipeu = toAsm . flip execState defaultLoadImmPerElmtUnsignedInstruction . unInst
+  sem = toAsm . flip execState defaultSemaphoreInstruction . unInst
+  with = (>>)
+
+instance IsInst (InstStmt a) where
+  alu = alu . unInstStmt
+  alui = alui . unInstStmt
+  br = br . unInstStmt
+  li32 = li32 . unInstStmt
+  lipes = lipes . unInstStmt
+  lipeu = lipeu . unInstStmt
+  sem = sem . unInstStmt
+  inst `with` additional = unInstStmt inst `with` additional
 
 sig :: SignalingBits -> Inst ALU ()
 sig x = Inst $ modify $ \inst -> inst { I.sig = x }
@@ -317,3 +364,174 @@ sa x = Inst $ modify $ \inst -> inst { I.sa = x }
 
 semaphore :: SemaphoreId -> Inst Semaphore ()
 semaphore x = Inst $ modify $ \inst -> inst { I.semaphore = x }
+
+setupVCDDMAStore :: Int32 -> Int32 -> Int32 -> Int32 -> Int32 -> Int32 -> Int32 -> Asm ()
+setupVCDDMAStore units depth laned horiz baseY baseX modeW = li32 $ do
+  cond_mul cond_AL
+  waddr_mul vpmvcd_wr_setup
+  immediate $ foldl' (.|.) 0 [ 0x80000000
+                             , units `shiftL` 23
+                             , depth `shiftL` 16
+                             , laned `shiftL` 15
+                             , horiz `shiftL` 14
+                             , baseY `shiftL` 7
+                             , baseX `shiftL` 3
+                             , modeW
+                             ]
+
+setupVCDDMALoad :: Int32 -> Int32 -> Int32 -> Int32 -> Int32 -> Int32 -> Int32 -> Asm ()
+setupVCDDMALoad modeW mPitch rowLen nRows vPitch vert addrXY = li32 $ do
+  cond_add cond_AL
+  waddr_add vpmvcd_rd_setup
+  immediate $ foldl' (.|.) 0 [ 0x80000000
+                             , modeW `shiftL` 28
+                             , mPitch `shiftL` 24
+                             , rowLen `shiftL` 20
+                             , nRows `shiftL` 16
+                             , vPitch `shiftL` 12
+                             , vert `shiftL` 11
+                             , addrXY
+                             ]
+
+class SetupVCDDMALoadStride a where
+  setupVCDDMALoadStride :: a -> Asm ()
+
+instance SetupVCDDMALoadStride Int32 where
+  setupVCDDMALoadStride mPitchB = li32 $ do
+    cond_add cond_AL
+    waddr_add vpmvcd_rd_setup
+    immediate $ 0x80000000 .|. (1 `shiftL` 28) .|. mPitchB
+
+instance SetupVCDDMALoadStride Register where
+  setupVCDDMALoadStride mPitchB = do
+    li32 $ do
+      cond_add cond_AL
+      waddr_add r0
+      immediate 0x90000000
+    -- TODO: impl
+    alu $ bor vpmvcd_rd_setup R0 R1
+
+data Mux = R0 | R1 | R2 | R3 | R4 | R5 | RA | RB deriving (Eq, Show, Typeable)
+
+toInputMux :: Mux -> InputMux
+toInputMux R0 = mux_R0
+toInputMux R1 = mux_R1
+toInputMux R2 = mux_R2
+toInputMux R3 = mux_R3
+toInputMux R4 = mux_R4
+toInputMux R5 = mux_R5
+toInputMux RA = mux_RA
+toInputMux RB = mux_RB
+
+newtype InstStmt part tag a = InstStmt { unInstStmt :: Inst tag a }
+
+addInst :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => OpAdd -> Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+addInst op r a b = InstStmt $ do
+  cond_add cond_AL
+  op_add op
+  waddr_add r
+  add_a $ toInputMux a
+  add_b $ toInputMux b
+
+fadd :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+fadd = addInst op_add_FADD
+
+fsub :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+fsub = addInst op_add_FSUB
+
+fmin :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+fmin = addInst op_add_FMIN
+
+fmax :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+fmax = addInst op_add_FMAX
+
+fminabs :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+fminabs = addInst op_add_FMINABS
+
+fmaxabs :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+fmaxabs = addInst op_add_FMAXABS
+
+ftoi :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+ftoi = addInst op_add_FTOI
+
+itof :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+itof = addInst op_add_ITOF
+
+iadd :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+iadd = addInst op_add_ADD
+
+isub :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+isub = addInst op_add_SUB
+
+shr :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+shr = addInst op_add_SHR
+
+asr :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+asr = addInst op_add_ASR
+
+ror :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+ror = addInst op_add_ROR
+
+shl :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+shl = addInst op_add_SHL
+
+imin :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+imin = addInst op_add_MIN
+
+imax :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+imax = addInst op_add_MAX
+
+band :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+band = addInst op_add_AND
+
+bor :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+bor = addInst op_add_OR
+
+bxor :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+bxor = addInst op_add_XOR
+
+bnot :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+bnot = addInst op_add_NOT
+
+clz :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+clz = addInst op_add_CLZ
+
+v8adds :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+v8adds = addInst op_add_V8ADDS
+
+v8subs :: (Has_cond_add tag, Has_op_add tag, Has_add_a tag, Has_add_b tag) => Register -> Mux -> Mux -> InstStmt OpAdd tag ()
+v8subs = addInst op_add_V8SUBS
+
+mulInst :: (Has_cond_mul tag, Has_op_mul tag, Has_mul_a tag, Has_mul_b tag) => OpMul -> Register -> Mux -> Mux -> InstStmt OpMul tag ()
+mulInst op r a b = InstStmt $ do
+  cond_mul cond_AL
+  op_mul op
+  waddr_mul r
+  mul_a $ toInputMux a
+  mul_b $ toInputMux b
+
+fmul :: (Has_cond_mul tag, Has_op_mul tag, Has_mul_a tag, Has_mul_b tag) => Register -> Mux -> Mux -> InstStmt OpMul tag ()
+fmul = mulInst op_mul_FMUL
+
+mul24 :: (Has_cond_mul tag, Has_op_mul tag, Has_mul_a tag, Has_mul_b tag) => Register -> Mux -> Mux -> InstStmt OpMul tag ()
+mul24 = mulInst op_mul_MUL24
+
+v8muld :: (Has_cond_mul tag, Has_op_mul tag, Has_mul_a tag, Has_mul_b tag) => Register -> Mux -> Mux -> InstStmt OpMul tag ()
+v8muld = mulInst op_mul_V8MULD
+
+v8min :: (Has_cond_mul tag, Has_op_mul tag, Has_mul_a tag, Has_mul_b tag) => Register -> Mux -> Mux -> InstStmt OpMul tag ()
+v8min = mulInst op_mul_V8MIN
+
+v8max :: (Has_cond_mul tag, Has_op_mul tag, Has_mul_a tag, Has_mul_b tag) => Register -> Mux -> Mux -> InstStmt OpMul tag ()
+v8max = mulInst op_mul_V8MAX
+
+v8adds' :: (Has_cond_mul tag, Has_op_mul tag, Has_mul_a tag, Has_mul_b tag) => Register -> Mux -> Mux -> InstStmt OpMul tag ()
+v8adds' = mulInst op_mul_V8ADDS
+
+v8subs' :: (Has_cond_mul tag, Has_op_mul tag, Has_mul_a tag, Has_mul_b tag) => Register -> Mux -> Mux -> InstStmt OpMul tag ()
+v8subs' = mulInst op_mul_V8SUBS
+
+(#) :: InstStmt OpAdd tag () -> InstStmt OpMul tag () -> Inst tag ()
+opAdd # opMul = do
+    unInstStmt opAdd
+    unInstStmt opMul

@@ -2,7 +2,7 @@ module VideoCore4.QPU.Instruction.Register
        (
          Register
 
-       , RWAB(..)
+       , ABRW(..)
        , rwab
 
        , ra0
@@ -112,219 +112,219 @@ import Data.Typeable
 import Data.Word
 import VideoCore4.QPU.Instruction.Types
 
-data RWAB = RA
-          | RB
-          | WA
-          | WB
+data ABRW = AR
+          | BR
+          | AW
+          | BW
           deriving (Eq, Show, Typeable)
 
 data Register = Register { registerAddr :: Word8
-                         , registerRWAB :: [RWAB]
+                         , registerABRW :: [ABRW]
                          } deriving (Eq, Show, Typeable)
 
 instance To64 Register where
   to64 = toEnum . fromEnum . (.&. 0x3F) . registerAddr
 
-rwab :: Register -> [RWAB]
-rwab = registerRWAB
+rwab :: Register -> [ABRW]
+rwab = registerABRW
 
 ra0 :: Register
-ra0 = Register 0 [RA,WA]
+ra0 = Register 0 [AR,AW]
 rb0 :: Register
-rb0 = Register 0 [RB,WB]
+rb0 = Register 0 [BR,BW]
 ra1 :: Register
-ra1 = Register 1 [RA,WA]
+ra1 = Register 1 [AR,AW]
 rb1 :: Register
-rb1 = Register 1 [RB,WB]
+rb1 = Register 1 [BR,BW]
 ra2 :: Register
-ra2 = Register 2 [RA,WA]
+ra2 = Register 2 [AR,AW]
 rb2 :: Register
-rb2 = Register 2 [RB,WB]
+rb2 = Register 2 [BR,BW]
 ra3 :: Register
-ra3 = Register 3 [RA,WA]
+ra3 = Register 3 [AR,AW]
 rb3 :: Register
-rb3 = Register 3 [RB,WB]
+rb3 = Register 3 [BR,BW]
 ra4 :: Register
-ra4 = Register 4 [RA,WA]
+ra4 = Register 4 [AR,AW]
 rb4 :: Register
-rb4 = Register 4 [RB,WB]
+rb4 = Register 4 [BR,BW]
 ra5 :: Register
-ra5 = Register 5 [RA,WA]
+ra5 = Register 5 [AR,AW]
 rb5 :: Register
-rb5 = Register 5 [RB,WB]
+rb5 = Register 5 [BR,BW]
 ra6 :: Register
-ra6 = Register 6 [RA,WA]
+ra6 = Register 6 [AR,AW]
 rb6 :: Register
-rb6 = Register 6 [RB,WB]
+rb6 = Register 6 [BR,BW]
 ra7 :: Register
-ra7 = Register 7 [RA,WA]
+ra7 = Register 7 [AR,AW]
 rb7 :: Register
-rb7 = Register 7 [RB,WB]
+rb7 = Register 7 [BR,BW]
 ra8 :: Register
-ra8 = Register 8 [RA,WA]
+ra8 = Register 8 [AR,AW]
 rb8 :: Register
-rb8 = Register 8 [RB,WB]
+rb8 = Register 8 [BR,BW]
 ra9 :: Register
-ra9 = Register 9 [RA,WA]
+ra9 = Register 9 [AR,AW]
 rb9 :: Register
-rb9 = Register 9 [RB,WB]
+rb9 = Register 9 [BR,BW]
 ra10 :: Register
-ra10 = Register 10 [RA,WA]
+ra10 = Register 10 [AR,AW]
 rb10 :: Register
-rb10 = Register 10 [RB,WB]
+rb10 = Register 10 [BR,BW]
 ra11 :: Register
-ra11 = Register 11 [RA,WA]
+ra11 = Register 11 [AR,AW]
 rb11 :: Register
-rb11 = Register 11 [RB,WB]
+rb11 = Register 11 [BR,BW]
 ra12 :: Register
-ra12 = Register 12 [RA,WA]
+ra12 = Register 12 [AR,AW]
 rb12 :: Register
-rb12 = Register 12 [RB,WB]
+rb12 = Register 12 [BR,BW]
 ra13 :: Register
-ra13 = Register 13 [RA,WA]
+ra13 = Register 13 [AR,AW]
 rb13 :: Register
-rb13 = Register 13 [RB,WB]
+rb13 = Register 13 [BR,BW]
 ra14 :: Register
-ra14 = Register 14 [RA,WA]
+ra14 = Register 14 [AR,AW]
 rb14 :: Register
-rb14 = Register 14 [RB,WB]
+rb14 = Register 14 [BR,BW]
 ra15 :: Register
-ra15 = Register 15 [RA,WA]
+ra15 = Register 15 [AR,AW]
 rb15 :: Register
-rb15 = Register 15 [RB,WB]
+rb15 = Register 15 [BR,BW]
 ra16 :: Register
-ra16 = Register 16 [RA,WA]
+ra16 = Register 16 [AR,AW]
 rb16 :: Register
-rb16 = Register 16 [RB,WB]
+rb16 = Register 16 [BR,BW]
 ra17 :: Register
-ra17 = Register 17 [RA,WA]
+ra17 = Register 17 [AR,AW]
 rb17 :: Register
-rb17 = Register 17 [RB,WB]
+rb17 = Register 17 [BR,BW]
 ra18 :: Register
-ra18 = Register 18 [RA,WA]
+ra18 = Register 18 [AR,AW]
 rb18 :: Register
-rb18 = Register 18 [RB,WB]
+rb18 = Register 18 [BR,BW]
 ra19 :: Register
-ra19 = Register 19 [RA,WA]
+ra19 = Register 19 [AR,AW]
 rb19 :: Register
-rb19 = Register 19 [RB,WB]
+rb19 = Register 19 [BR,BW]
 ra20 :: Register
-ra20 = Register 20 [RA,WA]
+ra20 = Register 20 [AR,AW]
 rb20 :: Register
-rb20 = Register 20 [RB,WB]
+rb20 = Register 20 [BR,BW]
 ra21 :: Register
-ra21 = Register 21 [RA,WA]
+ra21 = Register 21 [AR,AW]
 rb21 :: Register
-rb21 = Register 21 [RB,WB]
+rb21 = Register 21 [BR,BW]
 ra22 :: Register
-ra22 = Register 22 [RA,WA]
+ra22 = Register 22 [AR,AW]
 rb22 :: Register
-rb22 = Register 22 [RB,WB]
+rb22 = Register 22 [BR,BW]
 ra23 :: Register
-ra23 = Register 23 [RA,WA]
+ra23 = Register 23 [AR,AW]
 rb23 :: Register
-rb23 = Register 23 [RB,WB]
+rb23 = Register 23 [BR,BW]
 ra24 :: Register
-ra24 = Register 24 [RA,WA]
+ra24 = Register 24 [AR,AW]
 rb24 :: Register
-rb24 = Register 24 [RB,WB]
+rb24 = Register 24 [BR,BW]
 ra25 :: Register
-ra25 = Register 25 [RA,WA]
+ra25 = Register 25 [AR,AW]
 rb25 :: Register
-rb25 = Register 25 [RB,WB]
+rb25 = Register 25 [BR,BW]
 ra26 :: Register
-ra26 = Register 26 [RA,WA]
+ra26 = Register 26 [AR,AW]
 rb26 :: Register
-rb26 = Register 26 [RB,WB]
+rb26 = Register 26 [BR,BW]
 ra27 :: Register
-ra27 = Register 27 [RA,WA]
+ra27 = Register 27 [AR,AW]
 rb27 :: Register
-rb27 = Register 27 [RB,WB]
+rb27 = Register 27 [BR,BW]
 ra28 :: Register
-ra28 = Register 28 [RA,WA]
+ra28 = Register 28 [AR,AW]
 rb28 :: Register
-rb28 = Register 28 [RB,WB]
+rb28 = Register 28 [BR,BW]
 ra29 :: Register
-ra29 = Register 29 [RA,WA]
+ra29 = Register 29 [AR,AW]
 rb29 :: Register
-rb29 = Register 29 [RB,WB]
+rb29 = Register 29 [BR,BW]
 ra30 :: Register
-ra30 = Register 30 [RA,WA]
+ra30 = Register 30 [AR,AW]
 rb30 :: Register
-rb30 = Register 30 [RB,WB]
+rb30 = Register 30 [BR,BW]
 ra31 :: Register
-ra31 = Register 31 [RA,WA]
+ra31 = Register 31 [AR,AW]
 rb31 :: Register
-rb31 = Register 31 [RB,WB]
+rb31 = Register 31 [BR,BW]
 uniform_read :: Register
-uniform_read = Register 32 [RA,RB]
+uniform_read = Register 32 [AR,BR]
 r0 :: Register
-r0 = Register 32 [WA,WB]
+r0 = Register 32 [AW,BW]
 r1 :: Register
-r1 = Register 33 [WA,WB]
+r1 = Register 33 [AW,BW]
 r2 :: Register
-r2 = Register 34 [WA,WB]
+r2 = Register 34 [AW,BW]
 r3 :: Register
-r3 = Register 35 [WA,WB]
+r3 = Register 35 [AW,BW]
 tmu_noswap :: Register
-tmu_noswap = Register 36 [WA,WB]
+tmu_noswap = Register 36 [AW,BW]
 r5 :: Register
-r5 = Register 37 [WA,WB]
+r5 = Register 37 [AW,BW]
 element_number :: Register
-element_number = Register 38 [RA]
+element_number = Register 38 [AR]
 qpu_number :: Register
-qpu_number = Register 38 [RB]
+qpu_number = Register 38 [BR]
 host_int :: Register
-host_int = Register 38 [WA,WB]
+host_int = Register 38 [AW,BW]
 nop :: Register
-nop = Register 39 [RA,RB,WA,WB]
+nop = Register 39 [AR,BR,AW,BW]
 uniforms_address :: Register
-uniforms_address = Register 40 [WA,WB]
+uniforms_address = Register 40 [AW,BW]
 vpm_read :: Register
-vpm_read = Register 48 [RA,RB]
+vpm_read = Register 48 [AR,BR]
 vpm_write :: Register
-vpm_write = Register 48 [WA,WB]
+vpm_write = Register 48 [AW,BW]
 vpm_ld_busy :: Register
-vpm_ld_busy = Register 49 [RA]
+vpm_ld_busy = Register 49 [AR]
 vpm_st_busy :: Register
-vpm_st_busy = Register 49 [RB]
+vpm_st_busy = Register 49 [BR]
 vpmvcd_rd_setup :: Register
-vpmvcd_rd_setup = Register 49 [WA]
+vpmvcd_rd_setup = Register 49 [AW]
 vpmvcd_wr_setup :: Register
-vpmvcd_wr_setup = Register 49 [WB]
+vpmvcd_wr_setup = Register 49 [BW]
 vpm_ld_wait :: Register
-vpm_ld_wait = Register 50 [RA]
+vpm_ld_wait = Register 50 [AR]
 vpm_st_wait :: Register
-vpm_st_wait = Register 50 [RB]
+vpm_st_wait = Register 50 [BR]
 vpm_ld_addr :: Register
-vpm_ld_addr = Register 50 [WA]
+vpm_ld_addr = Register 50 [AW]
 vpm_st_addr :: Register
-vpm_st_addr = Register 50 [WB]
+vpm_st_addr = Register 50 [BW]
 mutex_acquire :: Register
-mutex_acquire = Register 51 [RA,RB]
+mutex_acquire = Register 51 [AR,BR]
 mutex_release :: Register
-mutex_release = Register 51 [WA,WB]
+mutex_release = Register 51 [AW,BW]
 sfu_recip :: Register
-sfu_recip = Register 52 [WA,WB]
+sfu_recip = Register 52 [AW,BW]
 sfu_recipsqrt :: Register
-sfu_recipsqrt = Register 53 [WA,WB]
+sfu_recipsqrt = Register 53 [AW,BW]
 sfu_exp :: Register
-sfu_exp = Register 54 [WA,WB]
+sfu_exp = Register 54 [AW,BW]
 sfu_log :: Register
-sfu_log = Register 55 [WA,WB]
+sfu_log = Register 55 [AW,BW]
 tmu0s :: Register
-tmu0s = Register 56 [WA,WB]
+tmu0s = Register 56 [AW,BW]
 tmu0t :: Register
-tmu0t = Register 57 [WA,WB]
+tmu0t = Register 57 [AW,BW]
 tmu0r :: Register
-tmu0r = Register 58 [WA,WB]
+tmu0r = Register 58 [AW,BW]
 tmu0b :: Register
-tmu0b = Register 59 [WA,WB]
+tmu0b = Register 59 [AW,BW]
 tmu1s :: Register
-tmu1s = Register 60 [WA,WB]
+tmu1s = Register 60 [AW,BW]
 tmu1t :: Register
-tmu1t = Register 61 [WA,WB]
+tmu1t = Register 61 [AW,BW]
 tmu1r :: Register
-tmu1r = Register 62 [WA,WB]
+tmu1r = Register 62 [AW,BW]
 tmu1b :: Register
-tmu1b = Register 63 [WA,WB]
+tmu1b = Register 63 [AW,BW]
