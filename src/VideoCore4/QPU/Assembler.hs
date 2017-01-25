@@ -532,6 +532,4 @@ v8subs' :: (Has_cond_mul tag, Has_op_mul tag, Has_mul_a tag, Has_mul_b tag) => R
 v8subs' = mulInst op_mul_V8SUBS
 
 (#) :: InstStmt OpAdd tag () -> InstStmt OpMul tag () -> Inst tag ()
-opAdd # opMul = do
-    unInstStmt opAdd
-    unInstStmt opMul
+opAdd # opMul = unInstStmt opAdd >> unInstStmt opMul
