@@ -143,12 +143,14 @@ data AsmState =
   { asmStateInstruction :: [Instruction]
   , asmStateLabelPositions :: [(String, Int32)]
   , asmStateCurrentPosition :: Int32
+  , asmStatePass2 :: Bool
   } deriving (Eq, Show, Typeable)
 
 defaultAsmState :: AsmState
 defaultAsmState = AsmState { asmStateInstruction = []
                            , asmStateLabelPositions = []
                            , asmStateCurrentPosition = 0
+                           , asmStatePass2 = False
                            }
 
 newtype Asm a = Asm { unAsm :: State AsmState a } deriving (Functor, Applicative, Monad)
@@ -160,18 +162,23 @@ toAsm inst = Asm $ modify' updateState where
                     }
 
 asm :: Asm a -> [Instruction]
-asm = asmStateInstruction . flip execState defaultAsmState. unAsm
+asm code = asmStateInstruction $ flip execState defaultAsmState $ do
+  -- 1st pass (for collect label & position list)
+  _ <- unAsm code
+  -- 2nd pass
+  modify' (\s -> defaultAsmState { asmStateLabelPositions = asmStateLabelPositions s, asmStatePass2 = True })
+  unAsm code
 
 label :: String -> Asm ()
 label name = Asm $ modify' updateState where
   updateState s = s { asmStateLabelPositions = (name, asmStateCurrentPosition s) : asmStateLabelPositions s }
 
-toLabel :: String -> Asm (Maybe Int32)
+toLabel :: String -> Asm Int32
 toLabel name = Asm $ do
   s <- get
-  case lookup name $ asmStateLabelPositions s of
-    Nothing -> return Nothing
-    Just p  -> return $ Just (p - asmStateCurrentPosition s - 32)
+  return $ case lookup name $ asmStateLabelPositions s of
+    Nothing -> if asmStatePass2 s then error ("unknown label \"" ++ name ++ "\"") else 0
+    Just p  -> p - asmStateCurrentPosition s - 32
 
 newtype Inst tag a = Inst { unInst :: State Instruction a } deriving (Functor, Applicative, Monad)
 
